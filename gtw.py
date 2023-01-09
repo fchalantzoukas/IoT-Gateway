@@ -1,10 +1,31 @@
-from bluepy.btle import Scanner
+from bluepy.btle import Scanner, DefaultDelegate
 
-scanner=Scanner()
-devices=scanner.scan(10.0, passive=True)
+class ScanDelegate(DefaultDelegate):
+    def __init__(self):
+        DefaultDelegate.__init__(self)
 
-for dev in devices:
-	data=dev.getScanData()
-	for (adtype, desc, value) in data:
-		if 'Short Local Name' in desc:
-			print ("Device %s, RSSI=%d dB" % (dev.addr, dev.rssi))
+    #Not needed yet
+    def handleDiscovery(self, dev, isNewDev, isNewData):
+        pass
+
+def filterDevices(devices):
+    beacons=set()
+    for dev in devices:
+        if dev.addr[:-3]=="48:23:35:00:00":
+            beacons.add(dev)
+    return beacons
+
+def printBeacons(beacons, msgTypes):
+    for beac in beacons:
+        msg=beac.getScanData()[0][2]
+        msgType=msgTypes[msg[-8]]
+        print ("Device: {}\nMAC Address: {}\nRSSI={} dB\nMessage Type: {}\n".format(beac.addr[-2:].upper(),beac.addr, beac.rssi,msgType))
+
+
+msgTypes={'1':'Exists','2':'Connection','3':'Question'}
+
+scanner=Scanner().withDelegate(ScanDelegate())
+devices=scanner.scan(5, passive=True)
+
+beacons=filterDevices(devices)
+printBeacons(beacons, msgTypes)
