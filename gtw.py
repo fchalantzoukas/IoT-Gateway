@@ -10,7 +10,8 @@ class ScanDelegate(DefaultDelegate):
 
     #Not needed yet
     def handleDiscovery(self, dev, isNewDev, isNewData):
-        pass
+        if (isNewData):
+            getQuestioners(dev)
 
 #------------------------------------------------------
 
@@ -26,7 +27,7 @@ def filterDevices(devices):
     return beacons
 
 def scanDevices(scanner):
-    devices=scanner.scan(5, passive=True)
+    devices=scanner.scan(10, passive=True)
     beacons=filterDevices(devices)
     (viewers, msgList)=getData(beacons)
     r=requests.post(url=URL+'save',data={'viewers':viewers, 'msgList':msgList})
@@ -40,10 +41,18 @@ def getData(beacons):
         msgList.append(beac.getScanData()[0][2])
     return (viewers, msgList)
 
+def getQuestioners(dev):
+    if dev.addr[:-3]=="48:23:35:00:00":
+        msg = dev.getScanData()[0][2]
+        if msg[-8]=='3':
+            r=requests.post(url=URL+'savequest',data={'questioner':dev.addr})
+            if r.text!='':
+                print(r.text)
+
 #------------------------------------------------------
 
 testScans=['First','Second','Third']
-scanner=Scanner()
+scanner=Scanner().withDelegate(ScanDelegate())
 
 try:
     r=requests.post(url=URL+'clear')
@@ -57,7 +66,10 @@ try:
             scanNum+=1
         print('\n')
     r=requests.get(url=URL+'view')
-    print('Viewers and their respective viewing duration:\n{}'.format(r.text))
+    r1=requests.get(url=URL+'viewquest')
+    print('Viewers and their respective viewing duration \n{}'.format(r.text))
+    print('Questioners: \n{}'.format(r1.text))
+
 
 except requests.exceptions.RequestException as e:
     print('Server closed\nExiting...')
