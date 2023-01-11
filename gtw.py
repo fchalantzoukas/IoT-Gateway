@@ -1,4 +1,8 @@
 from bluepy.btle import Scanner, DefaultDelegate
+from dotenv import load_dotenv
+import os
+import requests
+import time
 
 class ScanDelegate(DefaultDelegate):
     def __init__(self):
@@ -10,6 +14,10 @@ class ScanDelegate(DefaultDelegate):
 
 #------------------------------------------------------
 
+load_dotenv()
+IP = os.environ.get('IP')
+URL = 'http://{}/'.format(IP)
+
 def filterDevices(devices):
     beacons=set()
     for dev in devices:
@@ -17,45 +25,36 @@ def filterDevices(devices):
             beacons.add(dev)
     return beacons
 
-def printBeacons(beacons, msgTypes):
-    for beac in beacons:
-        msg=beac.getScanData()[0][2]
-        msgType=msgTypes[msg[-8]]
-        print ("Device: {}\nMAC Address: {}\nRSSI={} dB\nMessage Type: {}\n".format(beac.addr[-2:].upper(),beac.addr, beac.rssi,msgType))
-
-def scanDevices(scanner, msgTypes, testScans):
-    viewersList=set() #Total viewers
-    viewTime=dict()
-    for scan in testScans:
-        print('{} Scan\n{}'.format(scan,(len(scan)+5)*'-'))
-        viewers=doScan(scanner,msgTypes) #Single Scan viewers
-        for viewer in viewers:
-            if viewer in viewersList:
-                viewTime[viewer]+=10
-            else:
-                viewersList.add(viewer)
-                viewTime[viewer]=10
-    return viewTime
-
-#Single scan
-def doScan(scanner, msgTypes):
+def scanDevices(scanner):
     devices=scanner.scan(5, passive=True)
     beacons=filterDevices(devices)
-    printBeacons(beacons, msgTypes)
-    viewers=set()
+    (viewers, msgList)=getData(beacons)
+    r=requests.post(url=URL+'save',data={'viewers':viewers, 'msgList':msgList})
+    print(r.text)
+
+def getData(beacons):
+    viewers=[]
+    msgList=[]
     for beac in beacons:
-        viewers.add(beac.addr)
-    return viewers
+        viewers.append(beac.addr)
+        msgList.append(beac.getScanData()[0][2])
+    return (viewers, msgList)
 
 #------------------------------------------------------
 
-msgTypes={'1':'Exists','2':'Connection','3':'Question'}
 testScans=['First','Second','Third']
+scanner=Scanner()
 
-scanner=Scanner().withDelegate(ScanDelegate())
+try:
+    r=requests.post(url=URL+'clear')
+    scanNum = 1
+    for scan in testScans:
+        print('{} Scan\n{}'.format(scan,(len(scan)+5)*'-'))
+        scanDevices(scanner)
+        if scanNum<len(testScans):
+            print('Program pausing for 5s to adjust the beacons...')
+            time.sleep(5)
+            scanNum+=1
 
-viewTime = scanDevices(scanner, msgTypes, testScans)
-
-print('Watchtime:\n'+10*'-')
-for viewer in viewTime:
-    print('{}: {} minutes'.format(viewer[-2:].upper(), viewTime[viewer]))
+except requests.exceptions.RequestException as e:
+    print('Server closed\nExiting...')
