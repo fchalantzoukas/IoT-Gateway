@@ -55,6 +55,9 @@ try:
             print('Program pausing for 5s to adjust the beacons...')
             time.sleep(5)
             scanNum+=1
+        print('\n')
+    r=requests.get(url=URL+'view')
+    print('Viewers and their respective viewing duration:\n{}'.format(r.text))
 
 except requests.exceptions.RequestException as e:
     print('Server closed\nExiting...')
