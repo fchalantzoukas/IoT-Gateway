@@ -13,10 +13,12 @@ class ScanDelegate(DefaultDelegate):
         if (isNewData):
             getQuestioners(dev)
 
+
 #------------------------------------------------------
 
 load_dotenv()
 IP = os.environ.get('IP')
+#KEY = os.environ.get('KEY')
 URL = 'http://{}/'.format(IP)
 
 def filterDevices(devices):
@@ -46,7 +48,7 @@ def getQuestioners(dev):
         msg = dev.getScanData()[0][2]
         if msg[-8]=='3':
             r=requests.post(url=URL+'savequest',data={'questioner':dev.addr})
-            if r.text!='':
+            if r.text!='Fail' and r.text!='Pass':
                 print(r.text)
 
 #------------------------------------------------------
@@ -61,12 +63,13 @@ try:
         print('{} Scan\n{}'.format(scan,(len(scan)+5)*'-'))
         scanDevices(scanner)
         if scanNum<len(testScans):
-            print('Program pausing for 5s to adjust the beacons...')
+            print('Program pausing for 5s to adjust the beacons...\n')
             time.sleep(5)
             scanNum+=1
-        print('\n')
     r=requests.get(url=URL+'view')
     r1=requests.get(url=URL+'viewquest')
+    print('\nResults\n{}'.format('-'*7))
+    time.sleep(2)
     print('Viewers and their respective viewing duration \n{}'.format(r.text))
     print('Questioners: \n{}'.format(r1.text))
 
