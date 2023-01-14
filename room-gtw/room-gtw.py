@@ -8,7 +8,6 @@ class ScanDelegate(DefaultDelegate):
     def __init__(self):
         DefaultDelegate.__init__(self)
 
-    #Not needed yet
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if (isNewData):
             getQuestioners(dev)
@@ -29,7 +28,7 @@ def filterDevices(devices):
     return beacons
 
 def scanDevices(scanner):
-    devices=scanner.scan(10, passive=True)
+    devices=scanner.scan(5)
     beacons=filterDevices(devices)
     (viewers, msgList)=getData(beacons)
     r=requests.post(url=URL+'save',data={'viewers':viewers, 'msgList':msgList})
@@ -45,11 +44,17 @@ def getData(beacons):
 
 def getQuestioners(dev):
     if dev.addr[:-3]=="48:23:35:00:00":
-        msg = dev.getScanData()[0][2]
-        if msg[-8]=='3':
-            r=requests.post(url=URL+'savequest',data={'questioner':dev.addr})
-            if r.text!='Fail' and r.text!='Pass':
-                print(r.text)
+        try:
+            msg = dev.getScanData()[0][2]
+            if msg[-98]=='3':
+                r=requests.post(url=URL+'savequest',data={'questioner':dev.addr})
+                if r.text!='Fail' and r.text!='Pass':
+                    print(r.text)
+        except Exception as err:
+            file = open('log.txt', 'a')
+            content = str(err)+'\n'
+            file.write(content)
+            file.close()
 
 #------------------------------------------------------
 
