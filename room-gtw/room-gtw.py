@@ -46,7 +46,7 @@ def getQuestioners(dev):
     if dev.addr[:-3]=="48:23:35:00:00":
         try:
             msg = dev.getScanData()[0][2]
-            if msg[-98]=='3':
+            if msg[-8]=='3':
                 r=requests.post(url=URL+'savequest',data={'questioner':dev.addr})
                 if r.text!='Fail' and r.text!='Pass':
                     print(r.text)
