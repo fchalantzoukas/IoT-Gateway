@@ -38,16 +38,16 @@ def getData(beacons):
     viewers=[]
     msgList=[]
     for beac in beacons:
-        viewers.append(beac.addr)
+        viewers.append(beac.addr[-2:])
         msgList.append(beac.getScanData()[0][2])
     return (viewers, msgList)
 
 def getQuestioners(dev):
     if dev.addr[:-3]=="48:23:35:00:00":
         try:
-            msg = dev.getScanData()[0][2]
+            msg = dev.getValueText(255)
             if msg[-8]=='3':
-                r=requests.post(url=URL+'savequest',data={'questioner':dev.addr})
+                r=requests.post(url=URL+'savequest',data={'questioner':dev.addr[-2:]})
                 if r.text!='Fail' and r.text!='Pass':
                     print(r.text)
         except Exception as err:
