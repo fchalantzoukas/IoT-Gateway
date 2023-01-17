@@ -1,3 +1,4 @@
+#Not needed currently
 def convertToInt(mantissa_str):
     power_count = -1
     mantissa_int = 0

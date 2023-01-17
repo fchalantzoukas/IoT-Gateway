@@ -2,7 +2,6 @@ from bluepy.btle import Scanner, DefaultDelegate
 from dotenv import load_dotenv
 import os
 import requests
-from ieee754 import ieee754toreal
 
 class ScanDelegate(DefaultDelegate):
     def __init__(self):
@@ -10,15 +9,13 @@ class ScanDelegate(DefaultDelegate):
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if isNewData:
-            if dev.addr[-2:].upper() in authBeacons and len(dev.getValueText(255))==52:
-                print(dev.getValueText(255))
-                closestID = getClosest(dev.getValueText(255))
-                kiosk = dev.addr[-2:].upper()
-                if close[kiosk]!=closestID:
-                    close[kiosk]=closestID
-                    r=requests.post(url=URL+'saveclosest', data={'closestID':closestID, 'kiosk':kiosk})
-                    print(r.text)
-                    print('The closest now:',closestID)
+            data = dev.getValueText(255)
+            if dev.addr[:-3]=='48:23:35:00:00' and len(data)==52:
+                print(data)
+                if data[-8:-6]=='43':
+                    getClosest(data, dev.addr[-2:])
+                elif data[-8:-6]=='23':
+                    exchangeData(data,dev.addr[-2:])
 
 #------------------------------------------------------
 
@@ -27,32 +24,29 @@ IP = os.environ.get('IP')
 #KEY = os.environ.get('KEY')
 URL = 'http://{}/'.format(IP)
 
-def getClosest(data):
-    distances = []
-    tags = []
-    for i in range(0,3):
-        distances.append(ieee754toreal(data[20+8*i:28+8*i]))
-        tags.append(data[8+2*i:10+2*i])
-    print(distances)
-    if min(distances)<1.5:
-        return tags[distances.index(min(distances))]
-    else: return 'Null'
+def f(x):
+    return x
+
+def getClosest(data, dev.addr[-2:]):
+    closestID=data[18:20].upper()
+    kiosk = dev.addr[-2:].upper()
+    try:
+        r=requests.post(url=URL+'saveclosest', data={'closestID':closestID, 'kiosk':kiosk})
+        print(r.text)
+        print('The closest now:',closestID)
+    except requests.exceptions.RequestException as e:
+        print('Server closed\nExiting...')
+
+def exchangeData(data,dev.addr[-2:]):
+    closestID=data[18:20].upper()
+    initID = dev.addr[-2:].upper()
+    try:
+        r=requests.post(url=URL+'exchangedata', data={'closestID':closestID, 'initID':initID})
+        print(r.text)
+    except requests.exceptions.RequestException as e:
+        print('Server closed\nExiting...')
 
 #-----------------------------------------------------------
 
-authBeacons=set()
-close = {}
-
-r=requests.get(url=URL+'getauthbeacons')
-kiosks = r.json()
-for kiosk in kiosks:
-    authBeacons.add(kiosk['KioskMACID'])
-
-for beac in authBeacons:
-    close[beac]='Null'
-
 scanner=Scanner().withDelegate(ScanDelegate())
 devices=scanner.scan(20)
-
-r=requests.get(url=URL+'getclosest/A3')
-print('The closest eventually: '+r.text)
