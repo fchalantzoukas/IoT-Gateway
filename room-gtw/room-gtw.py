@@ -12,7 +12,6 @@ class ScanDelegate(DefaultDelegate):
         if (isNewData):
             getQuestioners(dev)
 
-
 #------------------------------------------------------
 
 load_dotenv()
@@ -24,29 +23,20 @@ def filterDevices(devices):
     beacons=set()
     for dev in devices:
         if dev.addr[:-3]=="48:23:35:00:00":
-            beacons.add(dev)
+            beacons.add(dev.addr[-2:])
     return beacons
 
 def scanDevices(scanner):
     devices=scanner.scan(5)
-    beacons=filterDevices(devices)
-    (viewers, msgList)=getData(beacons)
-    r=requests.post(url=URL+'save',data={'viewers':viewers, 'msgList':msgList})
+    viewers=filterDevices(devices)
+    r=requests.post(url=URL+'saveviewers',data={'viewers':viewers})
     print(r.text)
-
-def getData(beacons):
-    viewers=[]
-    msgList=[]
-    for beac in beacons:
-        viewers.append(beac.addr[-2:])
-        msgList.append(beac.getScanData()[0][2])
-    return (viewers, msgList)
 
 def getQuestioners(dev):
     if dev.addr[:-3]=="48:23:35:00:00":
         try:
             msg = dev.getValueText(255)
-            if msg[-8]=='3':
+            if len(msg)==52 and msg[-8:-6]=='33':
                 r=requests.post(url=URL+'savequest',data={'questioner':dev.addr[-2:]})
                 if r.text!='Fail' and r.text!='Pass':
                     print(r.text)
@@ -71,7 +61,7 @@ try:
             print('Program pausing for 5s to adjust the beacons...\n')
             time.sleep(5)
             scanNum+=1
-    r=requests.get(url=URL+'view')
+    r=requests.get(url=URL+'viewers')
     r1=requests.get(url=URL+'viewquest')
     print('\nResults\n{}'.format('-'*7))
     time.sleep(2)
