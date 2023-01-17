@@ -1,6 +1,7 @@
 from bluepy.btle import Scanner, DefaultDelegate
 from dotenv import load_dotenv
 import os
+import sys
 import requests
 
 class ScanDelegate(DefaultDelegate):
@@ -11,7 +12,6 @@ class ScanDelegate(DefaultDelegate):
         if isNewData:
             data = dev.getValueText(255)
             if dev.addr[:-3]=='48:23:35:00:00' and len(data)==52:
-                print(data)
                 if data[-8:-6]=='43':
                     getClosest(data, dev.addr[-2:])
                 elif data[-8:-6]=='23':
@@ -35,7 +35,7 @@ def getClosest(data, ID):
         print(r.text)
         print('The closest now:',closestID)
     except requests.exceptions.RequestException as e:
-        print('Server closed\nExiting...')
+        sys.exit('Server closed\nExiting...')
 
 def exchangeData(data,ID):
     closestID=data[18:20].upper()
@@ -44,7 +44,7 @@ def exchangeData(data,ID):
         r=requests.post(url=URL+'exchangedata', data={'closestID':closestID, 'initID':initID})
         print(r.text)
     except requests.exceptions.RequestException as e:
-        print('Server closed\nExiting...')
+        sys.exit('Server closed\nExiting...')
 
 #-----------------------------------------------------------
 
