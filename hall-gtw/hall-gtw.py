@@ -27,9 +27,9 @@ URL = 'http://{}/'.format(IP)
 def f(x):
     return x
 
-def getClosest(data, dev.addr[-2:]):
+def getClosest(data, ID):
     closestID=data[18:20].upper()
-    kiosk = dev.addr[-2:].upper()
+    kiosk = ID.upper()
     try:
         r=requests.post(url=URL+'saveclosest', data={'closestID':closestID, 'kiosk':kiosk})
         print(r.text)
@@ -37,9 +37,9 @@ def getClosest(data, dev.addr[-2:]):
     except requests.exceptions.RequestException as e:
         print('Server closed\nExiting...')
 
-def exchangeData(data,dev.addr[-2:]):
+def exchangeData(data,ID):
     closestID=data[18:20].upper()
-    initID = dev.addr[-2:].upper()
+    initID = ID.upper()
     try:
         r=requests.post(url=URL+'exchangedata', data={'closestID':closestID, 'initID':initID})
         print(r.text)
