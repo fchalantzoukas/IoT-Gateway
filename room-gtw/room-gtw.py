@@ -24,8 +24,8 @@ IP = os.environ.get('IP')
 URL = 'http://{}/'.format(IP)
 
 #Lecture/Conference Talk and Room parameters
-roomId = 2
-talkId = 4
+roomId = 3
+talkId = 15
 
 def filterDevices(devices):
     '''Returns a set including only our beacons, ignoring the other BLE devices'''

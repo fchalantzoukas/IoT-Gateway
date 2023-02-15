@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-dev
 
 ADD requirements.txt .
-ADD room-gtw.py .
+ADD hall-gtw.py .
 ADD .env .
 RUN pip3 install -r requirements.txt
 
-CMD python3 room-gtw.py
+CMD python3 hall-gtw.py
